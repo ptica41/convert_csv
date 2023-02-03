@@ -8,7 +8,6 @@ from deep_translator import GoogleTranslator
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from docx import Document
-# from docx.enum.section import WD_ORIENT
 from docx.shared import Cm, Pt
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
 from docx.oxml.shared import OxmlElement, qn
@@ -31,6 +30,7 @@ def parser(file='test.csv'):  # запись данных в список
 
 
 def edit(data: list):  # функция приведения списка к надлежащему виду
+
     temp = []
     clean = []
     sort = []
@@ -78,6 +78,17 @@ def edit(data: list):  # функция приведения списка к н�
         if not a:
             break
 
+    while True:  # разбиение строк для переводчика (<5000 символов) и для полного отображения на странице
+        count = 0  # счетчик количества новых строк после разбиения ячеек до 3000 символов
+        for i in range(len(fin)):
+            if len(fin[i][2]) > 2800:
+                index = fin[i][2].rindex('\n\n', 0, 2800)
+                fin.insert(i + 1, [fin[i][0], '', fin[i][2][index + 1:], '', ''])
+                fin[i][2] = fin[i][2][:index]
+                count += 1
+        if not count:
+            break
+
     return fin
 
 
@@ -99,10 +110,16 @@ def to_pdf(data: list, name='test.pdf'):  # генерация pdf-файла
     medium = 0
     risk = ['Критический', 'Высокий', 'Средний', 'Низкий', 'Critical', 'High', 'Medium', 'Low']
 
-    for i in range(len(data)):  # Удаление лишних переносов (кроме правого столбца)
+    for i in range(len(data)):  # Удаление лишних переносов (кроме правого столбца) и исправление ошибки по тэгам
         for j in range(1, len(data[i]) - 1):
+            data[i][j] = data[i][j].replace('<', ' < ')
+            data[i][j] = data[i][j].replace('\n\n\n', '\n\n')
             data[i][j] = data[i][j].replace('\n\n', '<br />')
             data[i][j] = data[i][j].replace('\n', ' ')
+
+    for i in range(len(data)):  # Удаление лишних пробелов
+        for j in range(1, len(data[i]) - 1):
+            data[i][j] = data[i][j].replace('  ', ' ')
 
     for i in range(len(data)):  # Замена переноса на тег (pdf не воспринимает \n) и коррекция перевода
         data[i][4] = data[i][4].replace('\n', '<br />')
@@ -380,6 +397,6 @@ if __name__ == '__main__':
     data = translate(data)
     data_docx = copy.deepcopy(data)
     to_pdf(data)  # при необходимости в аргументе функции указать название файла pdf
-    to_docx(data_docx)  # при необходимости в аргументе функции указать название файла docx
+    # to_docx(data)  # при необходимости в аргументе функции указать название файла docx
     b = (time.time() - a) / 60
     print('Время выполнения скрипта: %2.1f min' % b)
