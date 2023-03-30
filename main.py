@@ -397,6 +397,6 @@ if __name__ == '__main__':
     data = translate(data)
     data_docx = copy.deepcopy(data)
     to_pdf(data)  # при необходимости в аргументе функции указать название файла pdf
-    to_docx(data)  # при необходимости в аргументе функции указать название файла docx
+    to_docx(data_docx)  # при необходимости в аргументе функции указать название файла docx
     b = (time.time() - a) / 60
     print('Время выполнения скрипта: %2.1f min' % b)
